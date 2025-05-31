@@ -34,7 +34,7 @@ Ensure you have the following tools installed:
 #### Option 1: Build from Source
 ```bash
 # Clone or extract the project
-git clone <repository-url>  # or extract from archive
+git clone  https://github.com/akmshasan/helmctl
 cd helmctl
 
 # Build the project
@@ -452,9 +452,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/helmctl/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/helmctl/discussions)
-- **Documentation**: [Wiki](https://github.com/yourusername/helmctl/wiki)
+- **Issues**: [GitHub Issues](https://github.com/akmshasan/helmctl/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/akmshasan/helmctl/discussions)
+- **Documentation**: [Wiki](https://github.com/akmshasan/helmctl/wiki)
 
 ---
 
