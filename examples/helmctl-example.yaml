@@ -1,0 +1,14 @@
+# Example helmctl configuration
+default_environment: development
+default_concurrency: 2
+default_timeout: 300
+auto_update_repos: true
+preferred_context: minikube
+log_level: info
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+  - name: stable
+    url: https://charts.helm.sh/stable
+  - name: prometheus-community
+    url: https://prometheus-community.github.io/helm-charts
