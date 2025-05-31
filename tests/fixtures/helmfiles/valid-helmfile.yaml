@@ -1,0 +1,19 @@
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
+
+environments:
+  development:
+    values:
+      - env: development
+  testing:
+    values:
+      - env: testing
+
+releases:
+  - name: nginx-test
+    chart: bitnami/nginx
+    version: "15.4.4"
+    namespace: default
+    values:
+      - replicaCount: 1

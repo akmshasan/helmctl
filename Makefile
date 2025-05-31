@@ -226,3 +226,34 @@ info: ## Show project information
 
 # All targets that don't create files
 .PHONY: help check-deps clean check fmt fmt-check lint test test-coverage debug build build-optimized install uninstall run run-args bench docs audit update quality dev release package docker watch git-hooks info
+# Test targets
+.PHONY: test-unit test-integration test-all test-coverage test-performance
+test-unit: ## Run unit tests only
+	@echo "$(BLUE)🧪 Running unit tests...$(RESET)"
+	@cargo test --lib --tests unit
+
+test-integration: ## Run integration tests only
+	@echo "$(BLUE)🧪 Running integration tests...$(RESET)"
+	@cargo test --tests integration
+
+test-performance: ## Run performance tests
+	@echo "$(BLUE)⚡ Running performance tests...$(RESET)"
+	@cargo test --tests integration::test_performance --release
+
+test-all: ## Run all tests (unit + integration)
+	@echo "$(BLUE)🧪 Running all tests...$(RESET)"
+	@cargo test --all-targets
+
+test-watch: ## Watch tests and re-run on changes
+	@echo "$(BLUE)👀 Watching tests...$(RESET)"
+	@command -v cargo-watch >/dev/null 2>&1 || { echo "$(YELLOW)⚠️  Installing cargo-watch...$(RESET)"; cargo install cargo-watch; }
+	@cargo watch -x "test --all-targets"
+
+test-coverage-html: ## Generate HTML coverage report
+	@echo "$(BLUE)📊 Generating HTML coverage report...$(RESET)"
+	@command -v cargo-tarpaulin >/dev/null 2>&1 || { echo "$(YELLOW)⚠️  Installing cargo-tarpaulin...$(RESET)"; cargo install cargo-tarpaulin; }
+	@cargo tarpaulin --out Html --output-dir coverage --all-targets
+	@echo "$(GREEN)✅ Coverage report generated: coverage/tarpaulin-report.html$(RESET)"
+
+# Override the default test target to be more comprehensive
+test: test-all ## Run all tests (comprehensive)

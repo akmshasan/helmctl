@@ -1,0 +1,8 @@
+default_environment: development
+default_concurrency: 2
+default_timeout: 300
+auto_update_repos: true
+log_level: info
+repositories:
+  - name: bitnami
+    url: https://charts.bitnami.com/bitnami
