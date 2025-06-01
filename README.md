@@ -1,6 +1,11 @@
 # Helmctl 🚀
 
-A comprehensive, enterprise-grade CLI tool for Helmfile operations and Kubernetes deployments built in Rust.
+[![Rust](https://img.shields.io/badge/rust-%23000000.svg?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](https://kubernetes.io/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![GitHub Stars](https://img.shields.io/github/stars/akmshasan/helmctl?style=for-the-badge)](https://github.com/akmshasan/helmctl/stargazers)
+
+> 🚀 Enterprise-grade CLI for Helmfile operations and Kubernetes deployments - Built with Rust
 
 ## ✨ Features
 
@@ -29,7 +34,7 @@ Ensure you have the following tools installed:
 #### Option 1: Build from Source
 ```bash
 # Clone or extract the project
-git clone <repository-url>  # or extract from archive
+git clone  https://github.com/akmshasan/helmctl
 cd helmctl
 
 # Build the project
@@ -447,9 +452,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/helmctl/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/helmctl/discussions)
-- **Documentation**: [Wiki](https://github.com/yourusername/helmctl/wiki)
+- **Issues**: [GitHub Issues](https://github.com/akmshasan/helmctl/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/akmshasan/helmctl/discussions)
+- **Documentation**: [Wiki](https://github.com/akmshasan/helmctl/wiki)
 
 ---
 
