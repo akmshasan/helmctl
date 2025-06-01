@@ -25,7 +25,7 @@ RESET := \033[0m
 help: ## Show this help message
 	@echo "$(CYAN)Helmctl Build System$(RESET)"
 	@echo "$(YELLOW)Available targets:$(RESET)"
-	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ { printf "  $(GREEN)%-20s$(RESET) %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
 
 # Check if required tools are installed
 .PHONY: check-deps
@@ -40,6 +40,7 @@ check-deps: ## Check if required dependencies are installed
 clean: ## Clean all build artifacts
 	@echo "$(BLUE)🧹 Cleaning build artifacts...$(RESET)"
 	@cargo clean
+	@rm -rf coverage/
 	@echo "$(GREEN)✅ Clean completed$(RESET)"
 
 # Check code without building
@@ -70,20 +71,103 @@ lint: check-deps ## Lint code using clippy
 	@cargo clippy --all-targets --all-features -- -D warnings
 	@echo "$(GREEN)✅ Linting completed$(RESET)"
 
-# Run tests
-.PHONY: test
-test: check-deps ## Run all tests
-	@echo "$(BLUE)🧪 Running tests...$(RESET)"
-	@cargo test --all-features
-	@echo "$(GREEN)✅ All tests passed$(RESET)"
+# =============================================================================
+# TEST TARGETS WITH PROPER DEPENDENCIES
+# =============================================================================
 
-# Run tests with coverage
+# Run unit tests
+.PHONY: test-unit
+test-unit: check-deps ## Run unit tests only
+	@echo "$(BLUE)🧪 Running unit tests...$(RESET)"
+	@cargo test --lib --tests unit
+	@echo "$(GREEN)✅ Unit tests completed$(RESET)"
+
+# Run integration tests
+.PHONY: test-integration
+test-integration: check-deps ## Run integration tests only
+	@echo "$(BLUE)🧪 Running integration tests...$(RESET)"
+	@cargo test --tests integration
+	@echo "$(GREEN)✅ Integration tests completed$(RESET)"
+
+# Run all tests
+.PHONY: test-all
+test-all: check-deps ## Run all tests (unit + integration)
+	@echo "$(BLUE)🧪 Running all tests...$(RESET)"
+	@cargo test --all-targets
+	@echo "$(GREEN)✅ All tests completed$(RESET)"
+
+# Run performance tests
+.PHONY: test-performance
+test-performance: check-deps ## Run performance tests
+	@echo "$(BLUE)⚡ Running performance tests...$(RESET)"
+	@cargo test --tests integration::test_performance --release
+	@echo "$(GREEN)✅ Performance tests completed$(RESET)"
+
+# =============================================================================
+# COVERAGE TARGETS (DEPEND ON TESTS)
+# =============================================================================
+
+# Install coverage tool if needed
+.PHONY: install-coverage-tool
+install-coverage-tool:
+	@echo "$(BLUE)📦 Checking coverage tool...$(RESET)"
+	@command -v cargo-tarpaulin >/dev/null 2>&1 || { \
+		echo "$(YELLOW)⚠️  Installing cargo-tarpaulin...$(RESET)"; \
+		cargo install cargo-tarpaulin; \
+	}
+	@echo "$(GREEN)✅ Coverage tool ready$(RESET)"
+
+# Generate basic coverage (depends on all tests passing)
 .PHONY: test-coverage
-test-coverage: check-deps ## Run tests with coverage (requires cargo-tarpaulin)
-	@echo "$(BLUE)🧪 Running tests with coverage...$(RESET)"
-	@command -v cargo-tarpaulin >/dev/null 2>&1 || { echo "$(YELLOW)⚠️  Installing cargo-tarpaulin...$(RESET)"; cargo install cargo-tarpaulin; }
-	@cargo tarpaulin --out Html --output-dir coverage
-	@echo "$(GREEN)✅ Coverage report generated in coverage/$(RESET)"
+test-coverage: test-all install-coverage-tool ## Generate coverage report (requires tests to pass)
+	@echo "$(BLUE)📊 Generating coverage report...$(RESET)"
+	@cargo tarpaulin --out Xml --output-dir coverage
+	@echo "$(GREEN)✅ Coverage report generated: coverage/cobertura.xml$(RESET)"
+
+# Generate HTML coverage report (depends on all tests passing)
+.PHONY: test-coverage-html
+test-coverage-html: test-all install-coverage-tool ## Generate HTML coverage report (requires tests to pass)
+	@echo "$(BLUE)📊 Generating HTML coverage report...$(RESET)"
+	@cargo tarpaulin --out Html --output-dir coverage --all-targets
+	@echo "$(GREEN)✅ HTML coverage report generated: coverage/tarpaulin-report.html$(RESET)"
+	@echo "$(CYAN)👀 Open with: open coverage/tarpaulin-report.html$(RESET)"
+
+# Generate comprehensive coverage (depends on all tests passing)
+.PHONY: test-coverage-all
+test-coverage-all: test-all install-coverage-tool ## Generate all coverage formats (requires tests to pass)
+	@echo "$(BLUE)📊 Generating comprehensive coverage reports...$(RESET)"
+	@cargo tarpaulin --out Html --out Xml --out Lcov --output-dir coverage --all-targets
+	@echo "$(GREEN)✅ All coverage reports generated in coverage/$(RESET)"
+
+# =============================================================================
+# WATCH TARGETS
+# =============================================================================
+
+# Install watch tool if needed
+.PHONY: install-watch-tool
+install-watch-tool:
+	@echo "$(BLUE)📦 Checking watch tool...$(RESET)"
+	@command -v cargo-watch >/dev/null 2>&1 || { \
+		echo "$(YELLOW)⚠️  Installing cargo-watch...$(RESET)"; \
+		cargo install cargo-watch; \
+	}
+	@echo "$(GREEN)✅ Watch tool ready$(RESET)"
+
+# Watch for changes and run tests
+.PHONY: test-watch
+test-watch: install-watch-tool ## Watch for changes and re-run tests automatically
+	@echo "$(BLUE)👀 Watching for changes...$(RESET)"
+	@cargo watch -x "test --all-targets"
+
+# Watch for changes and run tests with coverage
+.PHONY: test-watch-coverage
+test-watch-coverage: install-watch-tool install-coverage-tool ## Watch for changes and re-run tests with coverage
+	@echo "$(BLUE)👀 Watching for changes with coverage...$(RESET)"
+	@cargo watch -s "make test-coverage-html"
+
+# =============================================================================
+# BUILD TARGETS
+# =============================================================================
 
 # Build debug version
 .PHONY: debug
@@ -112,6 +196,44 @@ build-optimized: check-deps ## Build with maximum optimizations
 	@echo "$(CYAN)📦 Binary: $(RELEASE_DIR)/$(BINARY_NAME)$(RESET)"
 	@echo "$(CYAN)📏 Size: $$(du -h $(RELEASE_DIR)/$(BINARY_NAME) | cut -f1)$(RESET)"
 
+# =============================================================================
+# QUALITY TARGETS (WITH PROPER DEPENDENCIES)
+# =============================================================================
+
+# Full quality check pipeline (tests must pass before coverage)
+.PHONY: quality
+quality: fmt-check lint test-all ## Run full quality check pipeline
+	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
+
+# Quality check with coverage (depends on quality passing)
+.PHONY: quality-with-coverage
+quality-with-coverage: quality test-coverage-html ## Run quality checks and generate coverage
+	@echo "$(GREEN)✅ Quality checks and coverage completed$(RESET)"
+
+# =============================================================================
+# WORKFLOW TARGETS
+# =============================================================================
+
+# Development workflow
+.PHONY: dev
+dev: clean check test-all build ## Complete development workflow
+	@echo "$(GREEN)✅ Development workflow completed$(RESET)"
+
+# Release workflow (comprehensive)
+.PHONY: release
+release: clean quality-with-coverage build-optimized ## Complete release workflow with coverage
+	@echo "$(GREEN)✅ Release workflow completed$(RESET)"
+	@echo "$(CYAN)🎉 Ready for release!$(RESET)"
+
+# CI workflow (what CI should run)
+.PHONY: ci
+ci: fmt-check lint test-all test-coverage build ## CI workflow with coverage
+	@echo "$(GREEN)✅ CI workflow completed$(RESET)"
+
+# =============================================================================
+# INSTALLATION TARGETS
+# =============================================================================
+
 # Install binary system-wide
 .PHONY: install
 install: build ## Install binary to system PATH
@@ -128,6 +250,10 @@ uninstall: ## Uninstall binary from system PATH
 	@sudo rm -f $(INSTALL_PATH)/$(BINARY_NAME)
 	@echo "$(GREEN)✅ $(BINARY_NAME) uninstalled$(RESET)"
 
+# =============================================================================
+# UTILITY TARGETS
+# =============================================================================
+
 # Run the binary (debug version)
 .PHONY: run
 run: debug ## Run the debug version with --help
@@ -139,12 +265,6 @@ run: debug ## Run the debug version with --help
 run-args: debug ## Run debug version with custom arguments (use ARGS="...")
 	@echo "$(BLUE)🚀 Running $(BINARY_NAME) $(ARGS)...$(RESET)"
 	@$(DEBUG_DIR)/$(BINARY_NAME) $(ARGS)
-
-# Benchmark (if you have criterion benchmarks)
-.PHONY: bench
-bench: ## Run benchmarks
-	@echo "$(BLUE)📊 Running benchmarks...$(RESET)"
-	@cargo bench
 
 # Generate documentation
 .PHONY: docs
@@ -166,22 +286,6 @@ update: ## Update dependencies
 	@cargo update
 	@echo "$(GREEN)✅ Dependencies updated$(RESET)"
 
-# Full quality check pipeline
-.PHONY: quality
-quality: fmt-check lint test ## Run full quality check pipeline
-	@echo "$(GREEN)✅ All quality checks passed$(RESET)"
-
-# Development workflow
-.PHONY: dev
-dev: clean check test build ## Complete development workflow
-	@echo "$(GREEN)✅ Development workflow completed$(RESET)"
-
-# Release workflow
-.PHONY: release
-release: clean quality build-optimized test ## Complete release workflow
-	@echo "$(GREEN)✅ Release workflow completed$(RESET)"
-	@echo "$(CYAN)🎉 Ready for release!$(RESET)"
-
 # Package for distribution
 .PHONY: package
 package: build-optimized ## Package binary for distribution
@@ -191,28 +295,6 @@ package: build-optimized ## Package binary for distribution
 	@cp README.md dist/
 	@tar -czf dist/$(BINARY_NAME)-$(VERSION)-$(shell uname -s)-$(shell uname -m).tar.gz -C dist $(BINARY_NAME) README.md
 	@echo "$(GREEN)✅ Package created: dist/$(BINARY_NAME)-$(VERSION)-$(shell uname -s)-$(shell uname -m).tar.gz$(RESET)"
-
-# Docker build (if you want to add Docker support later)
-.PHONY: docker
-docker: ## Build Docker image
-	@echo "$(BLUE)🐳 Building Docker image...$(RESET)"
-	@docker build -t $(BINARY_NAME):$(VERSION) .
-	@echo "$(GREEN)✅ Docker image built: $(BINARY_NAME):$(VERSION)$(RESET)"
-
-# Watch for changes and rebuild (requires cargo-watch)
-.PHONY: watch
-watch: ## Watch for changes and rebuild automatically
-	@echo "$(BLUE)👀 Watching for changes...$(RESET)"
-	@command -v cargo-watch >/dev/null 2>&1 || { echo "$(YELLOW)⚠️  Installing cargo-watch...$(RESET)"; cargo install cargo-watch; }
-	@cargo watch -x "build"
-
-# Initialize git hooks (if using git)
-.PHONY: git-hooks
-git-hooks: ## Set up git hooks for development
-	@echo "$(BLUE)🔗 Setting up git hooks...$(RESET)"
-	@echo '#!/bin/bash\nmake fmt-check lint' > .git/hooks/pre-commit
-	@chmod +x .git/hooks/pre-commit
-	@echo "$(GREEN)✅ Git hooks configured$(RESET)"
 
 # Show project info
 .PHONY: info
@@ -224,36 +306,17 @@ info: ## Show project information
 	@echo "$(CYAN)Build directory: $(BUILD_DIR)$(RESET)"
 	@echo "$(CYAN)Install path: $(INSTALL_PATH)$(RESET)"
 
+# =============================================================================
+# MAIN WORKFLOW TARGETS (ALIASES)
+# =============================================================================
+
+# Default test target (comprehensive)
+.PHONY: test
+test: test-all ## Run all tests (alias for test-all)
+
+# Coverage target (depends on tests)
+.PHONY: coverage
+coverage: test-coverage-html ## Generate HTML coverage (depends on tests passing)
+
 # All targets that don't create files
-.PHONY: help check-deps clean check fmt fmt-check lint test test-coverage debug build build-optimized install uninstall run run-args bench docs audit update quality dev release package docker watch git-hooks info
-# Test targets
-.PHONY: test-unit test-integration test-all test-coverage test-performance
-test-unit: ## Run unit tests only
-	@echo "$(BLUE)🧪 Running unit tests...$(RESET)"
-	@cargo test --lib --tests unit
-
-test-integration: ## Run integration tests only
-	@echo "$(BLUE)🧪 Running integration tests...$(RESET)"
-	@cargo test --tests integration
-
-test-performance: ## Run performance tests
-	@echo "$(BLUE)⚡ Running performance tests...$(RESET)"
-	@cargo test --tests integration::test_performance --release
-
-test-all: ## Run all tests (unit + integration)
-	@echo "$(BLUE)🧪 Running all tests...$(RESET)"
-	@cargo test --all-targets
-
-test-watch: ## Watch tests and re-run on changes
-	@echo "$(BLUE)👀 Watching tests...$(RESET)"
-	@command -v cargo-watch >/dev/null 2>&1 || { echo "$(YELLOW)⚠️  Installing cargo-watch...$(RESET)"; cargo install cargo-watch; }
-	@cargo watch -x "test --all-targets"
-
-test-coverage-html: ## Generate HTML coverage report
-	@echo "$(BLUE)📊 Generating HTML coverage report...$(RESET)"
-	@command -v cargo-tarpaulin >/dev/null 2>&1 || { echo "$(YELLOW)⚠️  Installing cargo-tarpaulin...$(RESET)"; cargo install cargo-tarpaulin; }
-	@cargo tarpaulin --out Html --output-dir coverage --all-targets
-	@echo "$(GREEN)✅ Coverage report generated: coverage/tarpaulin-report.html$(RESET)"
-
-# Override the default test target to be more comprehensive
-test: test-all ## Run all tests (comprehensive)
+.PHONY: help check-deps clean check fmt fmt-check lint test-unit test-integration test-all test-performance test-coverage test-coverage-html test-coverage-all test-watch test-watch-coverage debug build build-optimized quality quality-with-coverage dev release ci install uninstall run run-args docs audit update package info test coverage install-coverage-tool install-watch-tool

@@ -3,9 +3,9 @@
 //! This library provides the core functionality for the Helmctl CLI tool.
 //! It includes configuration management, utilities, and command implementations.
 
+pub mod cli;
 pub mod config;
 pub mod utils;
-pub mod cli;
 
 // Re-export commonly used items
 pub use config::{Config, Repository};
