@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 env:
   CARGO_TERM_COLOR: always
@@ -17,45 +17,53 @@ jobs:
       release_version: ${{ steps.get_version.outputs.version }}
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
 
-    - name: Get version from tag
-      id: get_version
-      run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+      - name: Install sccache
+        run: cargo install sccache
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Helmctl ${{ steps.get_version.outputs.version }}
-        body: |
-          ## Changes in ${{ steps.get_version.outputs.version }}
+      - name: Add Cargo bin to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
 
-          ### 🚀 Features
-          - Enterprise-grade Helmfile CLI
-          - Multi-cluster support and safety features
-          - Comprehensive test suite with coverage
+      - name: Set RUSTC_WRAPPER
+        run: echo "RUSTC_WRAPPER=$HOME/.cargo/bin/sccache" >> $GITHUB_ENV
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-          ### 📦 Installation
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Helmctl ${{ steps.get_version.outputs.version }}
+          body: |
+            ## Changes in ${{ steps.get_version.outputs.version }}
 
-          **Download the binary for your platform below, or:**
+            ### 🚀 Features
+            - Enterprise-grade Helmfile CLI
+            - Multi-cluster support and safety features
+            - Comprehensive test suite with coverage
 
-          ```bash
-          # Build from source
-          cargo install --git https://github.com/akmshasan/helmctl
-          ```
+            ### 📦 Installation
 
-          **Quick Start:**
-          ```bash
-          helmctl config init
-          helmctl --help
-          ```
-        draft: false
-        prerelease: false
+            **Download the binary for your platform below, or:**
+
+            ```bash
+            # Build from source
+            cargo install --git https://github.com/akmshasan/helmctl
+            ```
+
+            **Quick Start:**
+            ```bash
+            helmctl config init
+            helmctl --help
+            ```
+          draft: false
+          prerelease: false
 
   build-release:
     name: Build Release Binary
@@ -78,25 +86,25 @@ jobs:
             asset_name: helmctl-macos-amd64
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
+      - name: Checkout code
+        uses: actions/checkout@v6
 
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        target: ${{ matrix.target }}
-        override: true
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          override: true
 
-    - name: Build release binary
-      run: cargo build --release --target ${{ matrix.target }}
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.create-release.outputs.upload_url }}
-        asset_path: ./target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
-        asset_name: ${{ matrix.asset_name }}
-        asset_content_type: application/octet-stream
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create-release.outputs.upload_url }}
+          asset_path: ./target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+          asset_name: ${{ matrix.asset_name }}
+          asset_content_type: application/octet-stream
