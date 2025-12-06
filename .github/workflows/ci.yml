@@ -137,6 +137,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
+      - name: Install sccache
+        run: cargo install sccache
+
+      - name: Add Cargo bin to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Set RUSTC_WRAPPER
+        run: echo "RUSTC_WRAPPER=$HOME/.cargo/bin/sccache" >> $GITHUB_ENV
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
