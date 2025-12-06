@@ -37,8 +37,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-cargo-
 
-    - name: Install sccache
-      run: cargo install sccache
     - name: Set up sccache
       run: echo "RUSTC_WRAPPER=$(which sccache)" >> $GITHUB_ENV
       
