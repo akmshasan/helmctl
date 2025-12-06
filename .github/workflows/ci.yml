@@ -90,6 +90,8 @@ jobs:
 
       - name: Generate coverage
         run: cargo tarpaulin --out Html --out Xml --output-dir coverage --all-targets
+        env:
+          RUSTC_WRAPPER: ""
 
       - name: Upload coverage reports
         uses: actions/upload-artifact@v5
