@@ -29,8 +29,11 @@ jobs:
       - name: Install sccache
         run: cargo install sccache
 
+      - name: Add Cargo bin to PATH
+        run: echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
       - name: Set RUSTC_WRAPPER
-        run: echo "RUSTC_WRAPPER=$(which sccache)" >> $GITHUB_ENV
+        run: echo "RUSTC_WRAPPER=$HOME/.cargo/bin/sccache" >> $GITHUB_ENV
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -99,7 +102,7 @@ jobs:
         if: github.repository == 'akmshasan/helmctl'
         uses: codecov/codecov-action@v5
         with:
-          file: coverage/cobertura.xml
+          files: coverage/cobertura.xml
           fail_ci_if_error: false
 
   security:
