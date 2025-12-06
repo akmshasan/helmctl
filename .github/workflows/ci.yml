@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -36,7 +36,7 @@ jobs:
         run: echo "RUSTC_WRAPPER=$HOME/.cargo/bin/sccache" >> $GITHUB_ENV
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
@@ -65,7 +65,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Install Rust
         uses: actions-rs/toolchain@v1
@@ -74,7 +74,7 @@ jobs:
           override: true
 
       - name: Cache cargo registry
-        uses: actions/cache@v4
+        uses: actions/cache@v3
         with:
           path: |
             ~/.cargo/registry
@@ -94,7 +94,7 @@ jobs:
           RUSTC_WRAPPER: ""
 
       - name: Upload coverage reports
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v3
         with:
           name: coverage-reports
           path: coverage/
@@ -102,7 +102,7 @@ jobs:
 
       - name: Upload to codecov (optional)
         if: github.repository == 'akmshasan/helmctl'
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v4
         with:
           files: coverage/cobertura.xml
           fail_ci_if_error: false
