@@ -3,6 +3,7 @@ use predicates::prelude::*;
 
 #[test]
 fn test_help_command() {
+    use assert_cmd::cargo::cargo_bin;
     let mut cmd = cargo_bin!("helmctl").unwrap();
     cmd.arg("--help");
     cmd.assert()
@@ -12,6 +13,7 @@ fn test_help_command() {
 
 #[test]
 fn test_version_command() {
+    use assert_cmd::cargo::cargo_bin;
     let mut cmd = cargo_bin!("helmctl").unwrap();
     cmd.arg("--version");
     cmd.assert()
@@ -22,6 +24,7 @@ fn test_version_command() {
 #[test]
 fn test_config_commands() {
     // Test config show (should work even without config file)
+    use assert_cmd::cargo::cargo_bin;
     let mut cmd = cargo_bin!("helmctl").unwrap();
     cmd.args(["config", "show"]);
     cmd.assert().success();
